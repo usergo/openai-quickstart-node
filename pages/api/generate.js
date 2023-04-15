@@ -30,6 +30,7 @@ export default async function (req, res) {
       model: "text-davinci-003",
       prompt: generatePrompt(animal),
       temperature: 0.6,
+      max_tokens: 2048,
     });
     res.status(200).json({ result: completion.data.choices[0].text });
   } catch(error) {
@@ -48,15 +49,21 @@ export default async function (req, res) {
   }
 }
 
-function generatePrompt(animal) {
+function generatePrompt(animal, maxPromptLength) {
   const capitalizedAnimal =
     animal[0].toUpperCase() + animal.slice(1).toLowerCase();
-  return `Suggest three names for an animal that is a superhero.
+  const promptTemplate = `Suggest three names for an animal that is a superhero.\nAnimal: ${capitalizedAnimal}\nNames:`;
+  const promptLength = promptTemplate.length;
+  const numberOfPrompts = Math.ceil(promptLength / maxPromptLength);
+  const prompts = [];
 
-Animal: Cat
-Names: Captain Sharpclaw, Agent Fluffball, The Incredible Feline
-Animal: Dog
-Names: Ruff the Protector, Wonder Canine, Sir Barks-a-Lot
-Animal: ${capitalizedAnimal}
-Names:`;
+  for (let i = 0; i < numberOfPrompts; i++) {
+    const startIndex = i * maxPromptLength;
+    const endIndex = (i + 1) * maxPromptLength;
+    const prompt = promptTemplate.substring(startIndex, endIndex);
+    prompts.push(prompt);
+  }
+
+  return prompts.join('');
 }
+
